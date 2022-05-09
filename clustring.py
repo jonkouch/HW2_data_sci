@@ -14,14 +14,25 @@ def add_noise(data):
     return data + noise
 
 
+def visualize_results(data, labels, centroids, path):
+    """
+    Visualizing results of the kmeans model, and saving the figure.
+    :param data: data as numpy array of shape (n, 2)
+    :param labels: the final labels of kmeans, as numpy array of size n
+    :param centroids: the final centroids of kmeans, as numpy array of shape (k, 2)
+    :param path: path to save the figure to.
+    """
+    pass
+    # plt.savefig(path)
+
+
 def sum_scaling(values):
     min_val = min(values)
-    sum = sum(values)
+    sum_values = sum(values)
     for i in range(len(values)):
-        values[i] = (values[i]-min_val)/sum
+        values[i] = (values[i]-min_val)/sum_values
 
 
-# ====================
 def transform_data(df, features):
     """
     Performs the following transformations on df:
@@ -32,9 +43,9 @@ def transform_data(df, features):
     :param features: list of 2 features from the dataframe
     :return: transformed data as numpy array of shape (n, 2)
     """
-    df[features].apply(sum_scaling)
-    return df[features].to_numpy()
-    # return data
+    df = df[features]
+    df.apply(sum_scaling)
+    return np.array(df)
 
 
 def choose_initial_centroids(data, k):
@@ -72,18 +83,6 @@ def kmeans(data, k):
     return labels, centroids
 
 
-def visualize_results(data, labels, centroids, path):
-    """
-    Visualizing results of the kmeans model, and saving the figure.
-    :param data: data as numpy array of shape (n, 2)
-    :param labels: the final labels of kmeans, as numpy array of size n
-    :param centroids: the final centroids of kmeans, as numpy array of shape (k, 2)
-    :param path: path to save the figure to.
-    """
-    pass
-    # plt.savefig(path)
-
-
 def dist(x, y):
     """
     Euclidean distance between vectors x, y
@@ -92,9 +91,9 @@ def dist(x, y):
     :return: the euclidean distance
     """
     distance = 0
-    for value_x, value_y in zip(x, y):
-        print(value_y, value_x)
-        distance += pow(value_x - value_y, 2)
+    for values_x, values_y in zip(x, y):
+        print(values_y, values_x)
+        distance += pow(values_x - values_y, 2)
 
     distance = sqrt(distance)
     return distance
@@ -104,9 +103,9 @@ def build_distance_matrix(data, centroids):
     k = len(centroids)
     n = len(data)
     distance_matrix = np.zeros((n, k))
-    for centroid in centroids:
-        for point in data:
-            distance_matrix[point][centroid] = dist(point, centroid)
+    for cent_index, centroid in enumerate(centroids):
+        for point in range(n):
+            distance_matrix[point][cent_index] = dist(data[point], centroid)
     return distance_matrix
 
 
@@ -122,8 +121,8 @@ def assign_to_clusters(data, centroids):
     n = len(data)
     distance_matrix = build_distance_matrix(data, centroids)
     labels = np.zeros(n)
-    for point in data:
-        labels[point] = np.where(distance_matrix[point] == min(distance_matrix[point]))
+    for point in range(n):
+        labels[point] = np.where(distance_matrix[point] == min(distance_matrix[point]))[0]
 
     return labels
 
@@ -138,12 +137,13 @@ def recompute_centroids(data, labels, k):
     """
     centroids = np.zeros((k, 2))
     for index, label in enumerate(labels):
+        label = int(label)
         centroids[label][0] += data[index][0]
         centroids[label][1] += data[index][1]
 
     for index in range(k):
-        centroids[index][0] /= labels.count(index)
-        centroids[index][1] /= labels.count(index)
+        centroids[index][0] /= np.count_nonzero(labels == index)
+        centroids[index][1] /= np.count_nonzero(labels == index)
 
     return centroids
 
